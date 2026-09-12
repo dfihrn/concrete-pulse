@@ -4,7 +4,7 @@
   "description": "Read-only community activity analytics for Concrete vaults.",
   "main": "pulse.js",
   "scripts": {
-    "test": "node --test pulse.test.js server.test.js vercel.test.js",
+    "test": "node --test pulse.test.js server.test.js vercel.test.js history-analytics.test.js",
     "start": "node server.js"
   },
   "keywords": [],
