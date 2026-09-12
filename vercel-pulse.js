@@ -44,9 +44,12 @@ export function createVercelHandlers({ storeFactory = () => createBlobStore(),
         async collect(req, res) {
             if (!prepare(req, res)) return;
             if (!authenticated(req)) return res.status(401).json({ error: "Unauthorized" });
+            let store;
+            let generationBeforeWrite;
             try {
-                const store = storeFactory();
+                store = storeFactory();
                 const { generation, revision } = await store.load();
+                generationBeforeWrite = generation;
                 // Absorb duplicate scheduler deliveries without advancing the baseline again.
                 if (generation && now() - Date.parse(generation.collectedAt) < 60000) {
                     return res.json({ status: "skipped", reason: "recent-collection" });
@@ -56,7 +59,26 @@ export function createVercelHandlers({ storeFactory = () => createBlobStore(),
                 await store.commit(next, revision);
                 return res.json({ status: "collected", timestamp: next.current.timestamp });
             } catch (error) {
-                if (error instanceof GenerationConflict) return res.json({ status: "skipped", reason: "concurrent-collection" });
+                if (error instanceof GenerationConflict && store) {
+                    try {
+                        const { generation: persistedGeneration } = await store.load();
+                        const previousCollectedAt = generationBeforeWrite
+                            ? Date.parse(generationBeforeWrite.collectedAt)
+                            : Number.NEGATIVE_INFINITY;
+                        const persistedCollectedAt = persistedGeneration
+                            ? Date.parse(persistedGeneration.collectedAt)
+                            : Number.NEGATIVE_INFINITY;
+
+                        // A conflict is a successful concurrent collection only when
+                        // another invocation demonstrably advanced the persisted generation.
+                        if (persistedCollectedAt > previousCollectedAt) {
+                            return res.json({ status: "skipped", reason: "concurrent-collection" });
+                        }
+                        return res.status(409).json({ error: "Pulse data was not persisted. Please retry." });
+                    } catch {
+                        return res.status(503).json({ error: "Unable to verify Pulse persistence. Please retry." });
+                    }
+                }
                 // No failed attempt overwrites the last successful generation. Age
                 // marks it stale across all instances, including cold starts.
                 return res.status(503).json({ error: "Unable to collect Pulse data. The last successful result is preserved." });

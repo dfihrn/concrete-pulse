@@ -14,7 +14,7 @@
   "engines": { "node": "24.x" },
   "dependencies": {
     "@concrete-xyz/sdk": "^1.2.4",
-    "@vercel/blob": "2.4.0",
+    "@vercel/blob": "2.6.1",
     "express": "^5.2.1"
   }
 }
