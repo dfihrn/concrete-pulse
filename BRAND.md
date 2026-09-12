@@ -1,39 +1,26 @@
 # Concrete brand references
 
-Source of truth consulted: https://live.standards.site/concrete
-Inspected September 10, 2026; public-release fallback prepared September 12, 2026.
+Source of truth: https://live.standards.site/concrete
+Inspected September 10, 2026; logo status updated September 12, 2026.
 
-## Assets removed before public publication
+## Official logo
 
-The following files were downloaded from the official Concrete brand standards page
-during local design work:
+`public/assets/brand/concrete-logo-dark.svg` is the exact, unmodified Concrete logo
+asset supplied for download through Concrete's official public brand guidelines. The
+header uses that asset at its original 800:96 aspect ratio. It has not been recreated,
+traced, optimized, recolored or otherwise altered.
 
-- `public/assets/brand/concrete-logo-dark.svg`
-- `public/assets/brand/Enduro-Regular.otf`
-- `public/assets/brand/SuisseIntlMono.otf`
+## Typography
 
-No license file or written redistribution grant accompanied them. Public availability
-does not by itself grant permission to redistribute a logo or font. The files were
-therefore removed before the unpublished initial commit was amended, so they are not
-present in the Git history intended for GitHub.
-
-These files may only be restored to a public repository or deployment after explicit
-redistribution permission or applicable license terms have been confirmed. Restoring
-them would require a separate, deliberate source and license review.
-
-## Public fallback
-
-The header and footer use a plain text `Concrete / Pulse` product label. It does not
-redraw or approximate the official Concrete logo. The surrounding black masthead,
-spacing, responsive layout and editorial hierarchy remain intact.
-
-The public stylesheet uses only system and web-safe fallbacks:
+Concrete's proprietary Enduro and Suisse Int'l Mono font files are intentionally not
+bundled. Typography continues to use system and web-safe fallbacks unless separate
+font redistribution rights are confirmed:
 
 - Headlines and body: Arial, Helvetica, sans-serif
 - Labels and numbers: Consolas, Liberation Mono, Courier New, monospace
 
 The established white, black, cement, sandstone, fieldstone and graphite color
-direction remains. No external font or logo request is made by the browser.
+direction remains. No external font request is made by the browser.
 
 Concrete names and trademarks remain the property of their respective owners. The
 project's ISC license covers original Concrete Pulse source code only and grants no

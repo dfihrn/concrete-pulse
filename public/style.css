@@ -1,4 +1,4 @@
-/* Restricted brand files are intentionally not bundled. See BRAND.md. */
+/* The official Concrete logo is bundled; proprietary brand fonts are not. See BRAND.md. */
 :root { color-scheme: light; --paper: #FFFFFF; --ink: #000000; --muted: #444444; --line: #C6C7C5; --dark: #000000; --accent: #F6E189; --display-font: Arial, Helvetica, sans-serif; --mono-font: Consolas, "Liberation Mono", "Courier New", monospace; font-family: var(--display-font); color: var(--ink); background: var(--paper); font-synthesis: none; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -117,9 +117,11 @@ footer .brand { font-size: .8125rem; color: var(--ink); }
 @media (max-width: 700px) { .wrap { width: calc(100% - 40px); } .masthead { min-height: 78px; } .community-label { display: none; } .hero { grid-template-columns: 1fr; padding-block: 46px; gap: 40px; } h1 { font-size: clamp(3.5rem, 16vw, 6rem); } .hero-data { min-height: 0; padding: 28px; } .hero-stat > strong { font-size: 6rem; } .hero-stat.secondary { flex-direction: row; align-items: center; gap: 24px; } .hero-stat.secondary > strong { font-size: 4rem; } .snapshot-bar { gap: 20px; } #status { margin-left: 0; width: 100%; max-width: none; } .editorial-section { padding-block: 56px; } .section-heading { flex-direction: column; align-items: flex-start; gap: 28px; margin-bottom: 30px; } h2 { font-size: clamp(2.5rem, 12vw, 4rem); } .section-aside { max-width: none; } .activity-grid, .active-grid, .supporting-section { grid-template-columns: 1fr; } .activity-card:first-child { display: block; padding: 26px; } .activity-card:first-child .movement { margin-top: 26px; } .activity-card .vault-name { font-size: 1.7rem; } .active-feature { padding-bottom: 16px; } .change-row { flex-direction: column; align-items: stretch; gap: 20px; } .change-row > div:last-child { text-align: left; } .supporting-section { padding-block: 48px; } .ecosystem-metrics { grid-template-columns: 1fr 1fr; gap: 30px; } footer { flex-direction: column; align-items: flex-start; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
-/* Text-only product label; this does not reproduce or approximate the official logo. */
+/* Preserve the official logo's 800:96 ratio and the established masthead spacing. */
 .masthead { background: #000; color: #fff; width: 100%; padding-inline: max(24px, calc((100% - 1280px) / 2)); border: 0; }
 .brand { display: inline-flex; align-items: center; gap: 20px; font-family: var(--mono-font); font-weight: 400; letter-spacing: 0; }
+.masthead .brand { gap: 24px; }
+.masthead .brand img { display: block; width: 200px; height: auto; flex-shrink: 0; }
 .brand-name { color: #fff; font-family: var(--display-font); font-size: 1.25rem; letter-spacing: .04em; }
 .brand-product { color: #fff; text-transform: uppercase; letter-spacing: .12em; }
 .brand span { margin: 0; color: #C6C7C5; }
@@ -137,6 +139,7 @@ footer .brand { color: #fff; }
 h1, h2 { letter-spacing: -.04em; overflow-wrap: anywhere; }
 @media (max-width: 700px) {
   .brand { gap: 16px; font-size: .875rem; }
+  .masthead .brand img { width: 168px; }
   .brand-name { font-size: 1.1rem; }
   .hero-stat.secondary { flex-wrap: wrap; }
   .section-heading { align-items: stretch; }
