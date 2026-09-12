@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Live activity across the Concrete ecosystem. Track vault TVL, APY and depositor movement.">
+  <title>Concrete Pulse</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#latest">Skip to Latest Pulse</a>
+  <header class="masthead wrap">
+    <a class="brand" href="#top" aria-label="Concrete Pulse home"><span class="brand-name">Concrete</span><span class="brand-divider" aria-hidden="true">/</span><span class="brand-product">Pulse</span></a>
+    <span class="community-label">Independent community intelligence</span>
+  </header>
+  <main id="top">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">THE ECOSYSTEM, IN MOTION</p>
+        <h1 id="hero-title">Concrete<br><span>Pulse</span><span class="hero-period">.</span></h1>
+        <p class="subtitle">Live activity across the Concrete ecosystem.</p>
+        <p class="hero-description">Track meaningful movement across Concrete vaults TVL, APY, depositors and ecosystem activity.</p>
+        <button id="refresh" type="button"><span id="refresh-label">Refresh Pulse</span><span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="hero-data" aria-label="Live ecosystem overview">
+        <div class="data-orbits" aria-hidden="true"></div>
+        <p class="eyebrow">THE CURRENT COMPARISON</p>
+        <div class="hero-stat"><strong data-summary="totalVaults">—</strong><span>VAULTS TRACKED</span></div>
+        <div class="hero-stat secondary"><strong data-summary="tvlChanges">—</strong><span>TVL MOVEMENTS<br><small><span data-summary="notableTvlChanges">—</span> meet the notable threshold</small></span></div>
+        <p class="data-source">Concrete vault data / live snapshot</p>
+      </div>
+    </section>
+    <div class="snapshot-bar wrap">
+      <div><span class="meta-label">CURRENT SNAPSHOT</span><time id="current-time">Waiting for data</time></div>
+      <div><span class="meta-label">PREVIOUS SNAPSHOT</span><time id="previous-time">Waiting for data</time></div>
+      <p id="status" role="status">Fetching the latest Concrete data…</p>
+    </div>
+    <div class="wrap"><p id="error" class="error" role="alert" hidden></p></div>
+    <div id="dashboard" aria-busy="true">
+      <section id="latest" class="editorial-section wrap" aria-labelledby="activity-title">
+        <div class="section-heading"><div><p class="eyebrow">01 / THE LATEST SIGNALS</p><h2 id="activity-title">LATEST<br>PULSE</h2></div><div class="section-aside"><p><strong data-summary="totalActivity">—</strong> observed changes in this comparison.</p><label class="feed-control"><input id="show-all" type="checkbox"> Include small TVL changes</label><p id="feed-count" class="section-note"></p></div></div>
+        <div id="activity" class="activity-grid"><p class="empty">Loading vault activity…</p></div>
+        <details id="more-activity" class="more-details" hidden><summary>More activity from this snapshot</summary><div id="activity-overflow" class="activity-grid"></div></details>
+      </section>
+      <section class="active-section" aria-labelledby="active-title"><div class="wrap editorial-section">
+        <div class="section-heading"><div><p class="eyebrow">02 / CHANGES THAT INTERSECT</p><h2 id="active-title">MOST ACTIVE<br>VAULTS</h2></div><p class="section-aside">See which vaults are changing in more than one way at the same time. For example, money moving in or out while yield or depositor activity also changes.</p></div>
+        <div id="active-list" class="active-grid"><p class="empty">Loading activity across categories…</p></div>
+        <details id="more-active" class="more-details" hidden><summary>More vaults with multiple change categories</summary><div id="active-overflow" class="active-grid"></div></details>
+      </div></section>
+      <section class="dark-section" aria-labelledby="tvl-title"><div class="wrap editorial-section">
+        <div class="section-heading"><div><p class="eyebrow">03 / CAPITAL IN MOTION</p><h2 id="tvl-title">TVL<br>MOVEMENT</h2></div><div class="section-aside tvl-totals"><p><strong data-summary="notableTvlChanges">—</strong> notable</p><p><span data-summary="tvlChanges">—</span> total detected</p></div></div>
+        <p class="threshold-note">Notable means at least $1,000 in absolute USD movement <strong>or</strong> 1% in absolute relative movement. No relative percentage is calculated from a zero baseline.</p>
+        <div id="notable-list" class="notable-list"><p class="empty">Loading notable TVL movement…</p></div>
+        <details class="more-details"><summary>All detected TVL movements <span id="raw-count"></span></summary><div id="tvl-list"></div></details>
+      </div></section>
+      <div class="wrap supporting-section">
+        <section id="apy-panel" aria-labelledby="apy-title"><p class="eyebrow">04 / YIELD CHANGES</p><h2 id="apy-title">APY MOVEMENT</h2><div id="apy-list"><p class="empty">Loading APY movement…</p></div></section>
+        <section id="depositors-panel" aria-labelledby="depositors-title"><p class="eyebrow">05 / PARTICIPATION</p><h2 id="depositors-title">DEPOSITOR ACTIVITY</h2><div id="depositors-list"><p class="empty">Loading depositor activity…</p></div></section>
+        <p id="data-note" class="data-note" hidden></p>
+      </div>
+      <section class="ecosystem-section wrap editorial-section" aria-labelledby="ecosystem-title">
+        <div class="section-heading"><div><p class="eyebrow">06 / THE WIDER PICTURE</p><h2 id="ecosystem-title">ECOSYSTEM<br>SNAPSHOT</h2></div><p class="section-aside">One comparison across Concrete.<br>Every number comes from the current Pulse.</p></div>
+        <dl class="ecosystem-metrics">
+          <div><dt>Total vaults</dt><dd data-summary="totalVaults">—</dd></div>
+          <div><dt>Notable TVL movements</dt><dd data-summary="notableTvlChanges">—</dd></div>
+          <div><dt>APY changes</dt><dd data-summary="apyChanges">—</dd></div>
+          <div><dt>Depositor changes</dt><dd data-summary="depositorChanges">—</dd></div>
+          <div><dt>New vaults</dt><dd data-summary="newVaults">—</dd></div>
+          <div><dt>Removed vaults</dt><dd data-summary="removedVaults">—</dd></div>
+        </dl>
+      </section>
+    </div>
+    <footer class="wrap"><a class="brand" href="#top" aria-label="Concrete Pulse home"><span class="brand-name">Concrete</span><span class="brand-divider" aria-hidden="true">/</span><span class="brand-product">Pulse</span></a><p>Observed changes, not recommendations.</p><span>Read-only community tool</span></footer>
+    <noscript><p class="error wrap">Enable JavaScript to load live Pulse data.</p></noscript>
+  </main>
+</body>
+</html>

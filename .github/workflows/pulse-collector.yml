@@ -1,0 +1,42 @@
+name: Pulse collector
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pulse-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Collect the latest Pulse snapshot
+        env:
+          PULSE_BASE_URL: ${{ secrets.PULSE_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          : "${PULSE_BASE_URL:?PULSE_BASE_URL is required}"
+          : "${CRON_SECRET:?CRON_SECRET is required}"
+
+          base_url="${PULSE_BASE_URL%/}"
+
+          curl \
+            --request GET \
+            --fail-with-body \
+            --show-error \
+            --silent \
+            --max-time 50 \
+            --retry 2 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "${base_url}/api/collect"

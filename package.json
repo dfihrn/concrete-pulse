@@ -1,0 +1,20 @@
+{
+  "name": "concrete-pulse",
+  "version": "1.0.0",
+  "description": "Read-only community activity analytics for Concrete vaults.",
+  "main": "pulse.js",
+  "scripts": {
+    "test": "node --test pulse.test.js server.test.js vercel.test.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "dependencies": {
+    "@concrete-xyz/sdk": "^1.2.4",
+    "@vercel/blob": "2.4.0",
+    "express": "^5.2.1"
+  }
+}

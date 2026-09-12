@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Local configuration, credentials and hosting metadata
+.env
+.env.*
+!.env.example
+.vercel/
+.npmrc
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Runtime snapshots and writer state: first startup creates data/ automatically
+/data/
+*.pid
+
+# Logs and test output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+
+# Temporary files and caches
+.cache/
+.tmp/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.orig
+*~
+
+# Local editor and operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
