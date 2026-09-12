@@ -1,24 +1,52 @@
-import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
+import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
 import { restoreGeneration } from "./generation.js";
 
 import { GenerationConflict } from "./generation-store.js";
 
+const STABLE_READ_ATTEMPTS = 3;
+
 export function createBlobStore({ token = process.env.BLOB_READ_WRITE_TOKEN,
     pathname = process.env.PULSE_BLOB_PATH || "pulse/generation.json",
-    sdk = { get, put }, timeoutMs = 10000 } = {}) {
+    sdk = { get, head, put }, timeoutMs = 10000 } = {}) {
     if (!token) throw new Error("Blob storage is not configured");
+
+    async function readMetadata() {
+        try {
+            return await sdk.head(pathname, { token,
+                abortSignal: AbortSignal.timeout(timeoutMs) });
+        } catch (error) {
+            if (error instanceof BlobNotFoundError) return null;
+            throw error;
+        }
+    }
+
     return {
         async load() {
-            // Read content AND its ETag together, bypassing the Blob cache. Using
-            // head() separately could pair old content with a newer ETag.
-            const response = await sdk.get(pathname, { access: "private", token,
-                useCache: false, abortSignal: AbortSignal.timeout(timeoutMs) });
-            if (!response) return { generation: null, revision: null };
-            if (response.statusCode !== 200 || !response.stream || !response.blob.etag) {
-                throw new Error("Invalid Blob response");
+            for (let attempt = 1; attempt <= STABLE_READ_ATTEMPTS; attempt += 1) {
+                const before = await readMetadata();
+                const response = await sdk.get(pathname, { access: "private", token,
+                    useCache: false, abortSignal: AbortSignal.timeout(timeoutMs) });
+                let serialized = null;
+                if (response) {
+                    if (response.statusCode !== 200 || !response.stream || !response.blob) {
+                        throw new Error("Invalid Blob response");
+                    }
+                    serialized = await new Response(response.stream).text();
+                }
+                const after = await readMetadata();
+                const beforeRevision = before?.etag ?? null;
+                const afterRevision = after?.etag ?? null;
+
+                if (beforeRevision !== afterRevision) continue;
+                if (beforeRevision === null && response === null) {
+                    return { generation: null, revision: null };
+                }
+                if (!beforeRevision || response === null) continue;
+
+                const generation = restoreGeneration(JSON.parse(serialized));
+                return { generation, revision: beforeRevision };
             }
-            const generation = restoreGeneration(await new Response(response.stream).json());
-            return { generation, revision: response.blob.etag };
+            throw new Error(`Unable to obtain a stable Blob generation after ${STABLE_READ_ATTEMPTS} attempts`);
         },
         async commit(generation, revision) {
             restoreGeneration(generation);
