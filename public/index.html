@@ -7,7 +7,7 @@
   <title>Concrete Pulse</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
-  <script src="/app.js" defer></script>
+  <script src="/app.js" type="module"></script>
 </head>
 <body>
   <a class="skip-link" href="#latest">Skip to Latest Pulse</a>
@@ -44,10 +44,38 @@
         <div id="activity" class="activity-grid"><p class="empty">Loading vault activity…</p></div>
         <details id="more-activity" class="more-details" hidden><summary>More activity from this snapshot</summary><div id="activity-overflow" class="activity-grid"></div></details>
       </section>
-      <section class="active-section" aria-labelledby="active-title"><div class="wrap editorial-section">
-        <div class="section-heading"><div><p class="eyebrow">02 / CHANGES THAT INTERSECT</p><h2 id="active-title">MOST ACTIVE<br>VAULTS</h2></div><p class="section-aside">See which vaults are changing in more than one way at the same time. For example, money moving in or out while yield or depositor activity also changes.</p></div>
-        <div id="active-list" class="active-grid"><p class="empty">Loading activity across categories…</p></div>
-        <details id="more-active" class="more-details" hidden><summary>More vaults with multiple change categories</summary><div id="active-overflow" class="active-grid"></div></details>
+      <section class="active-section history-section" aria-labelledby="history-title"><div class="wrap editorial-section">
+        <div class="section-heading history-heading">
+          <div><p class="eyebrow">02 / BEYOND THE LATEST PULSE</p><h2 id="history-title">ACTIVITY<br>OVER TIME</h2></div>
+          <div class="section-aside history-intro">
+            <p>See which vaults have changed repeatedly, or in more than one way, beyond the latest five-minute Pulse.</p>
+            <div class="history-selector" role="group" aria-label="Historical activity window">
+              <button class="history-window-button" type="button" data-history-window="1h" aria-pressed="true">1H</button>
+              <button class="history-window-button" type="button" data-history-window="24h" aria-pressed="false">24H</button>
+            </div>
+          </div>
+        </div>
+        <p id="history-coverage" class="history-coverage" aria-live="polite">Loading historical coverage…</p>
+        <div class="history-composition">
+          <section class="history-column" aria-labelledby="historical-active-title">
+            <p class="history-kicker">REPEATED + INTERSECTING CHANGE</p>
+            <h3 id="historical-active-title">MOST ACTIVE VAULTS</h3>
+            <p class="history-explanation">Ranked by categories changed, then frequency of observed change.</p>
+            <div id="historical-active-list" class="history-list"><p class="empty">Loading activity over time…</p></div>
+            <details id="historical-active-more" class="more-details" hidden><summary>More active vaults</summary><div id="historical-active-overflow" class="history-list"></div></details>
+          </section>
+          <section class="history-column history-tvl-column" aria-labelledby="historical-tvl-title">
+            <p class="history-kicker">NET CHANGE ACROSS THE WINDOW</p>
+            <h3 id="historical-tvl-title">LARGEST TVL MOVERS</h3>
+            <div id="historical-tvl-list" class="history-list"><p class="empty">Loading TVL movement…</p></div>
+            <details id="historical-tvl-more" class="more-details" hidden><summary>More TVL movers</summary><div id="historical-tvl-overflow" class="history-list"></div></details>
+          </section>
+        </div>
+        <section class="historical-other" aria-labelledby="historical-other-title">
+          <div><p class="history-kicker">OTHER OBSERVED ACTIVITY</p><h3 id="historical-other-title">APY + DEPOSITORS</h3></div>
+          <div id="historical-other-list" class="historical-other-grid"><p class="empty">Loading other observed activity…</p></div>
+          <div id="historical-quiet" class="historical-quiet"></div>
+        </section>
       </div></section>
       <section class="dark-section" aria-labelledby="tvl-title"><div class="wrap editorial-section">
         <div class="section-heading"><div><p class="eyebrow">03 / CAPITAL IN MOTION</p><h2 id="tvl-title">TVL<br>MOVEMENT</h2></div><div class="section-aside tvl-totals"><p><strong data-summary="notableTvlChanges">—</strong> notable</p><p><span data-summary="tvlChanges">—</span> total detected</p></div></div>
@@ -55,24 +83,19 @@
         <div id="notable-list" class="notable-list"><p class="empty">Loading notable TVL movement…</p></div>
         <details class="more-details"><summary>All detected TVL movements <span id="raw-count"></span></summary><div id="tvl-list"></div></details>
       </div></section>
-      <div class="wrap supporting-section">
-        <section id="apy-panel" aria-labelledby="apy-title"><p class="eyebrow">04 / YIELD CHANGES</p><h2 id="apy-title">APY MOVEMENT</h2><div id="apy-list"><p class="empty">Loading APY movement…</p></div></section>
-        <section id="depositors-panel" aria-labelledby="depositors-title"><p class="eyebrow">05 / PARTICIPATION</p><h2 id="depositors-title">DEPOSITOR ACTIVITY</h2><div id="depositors-list"><p class="empty">Loading depositor activity…</p></div></section>
+      <section class="other-latest-section wrap editorial-section" aria-labelledby="other-latest-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">04 / OTHER LATEST ACTIVITY</p><h2 id="other-latest-title">APY +<br>DEPOSITORS</h2></div>
+          <p class="section-aside">Additional APY and depositor changes from the latest five-minute comparison.</p>
+        </div>
+        <div id="other-latest-grid" class="other-latest-grid" data-state="loading">
+          <section id="apy-panel" class="latest-metric-panel" aria-labelledby="apy-title"><h3 id="apy-title">APY MOVEMENT</h3><div id="apy-list"><p class="empty">Loading APY movement…</p></div></section>
+          <section id="depositors-panel" class="latest-metric-panel" aria-labelledby="depositors-title"><h3 id="depositors-title">DEPOSITOR ACTIVITY</h3><div id="depositors-list"><p class="empty">Loading depositor activity…</p></div></section>
+        </div>
         <p id="data-note" class="data-note" hidden></p>
-      </div>
-      <section class="ecosystem-section wrap editorial-section" aria-labelledby="ecosystem-title">
-        <div class="section-heading"><div><p class="eyebrow">06 / THE WIDER PICTURE</p><h2 id="ecosystem-title">ECOSYSTEM<br>SNAPSHOT</h2></div><p class="section-aside">One comparison across Concrete.<br>Every number comes from the current Pulse.</p></div>
-        <dl class="ecosystem-metrics">
-          <div><dt>Total vaults</dt><dd data-summary="totalVaults">—</dd></div>
-          <div><dt>Notable TVL movements</dt><dd data-summary="notableTvlChanges">—</dd></div>
-          <div><dt>APY changes</dt><dd data-summary="apyChanges">—</dd></div>
-          <div><dt>Depositor changes</dt><dd data-summary="depositorChanges">—</dd></div>
-          <div><dt>New vaults</dt><dd data-summary="newVaults">—</dd></div>
-          <div><dt>Removed vaults</dt><dd data-summary="removedVaults">—</dd></div>
-        </dl>
       </section>
     </div>
-    <footer class="wrap"><a class="brand" href="#top" aria-label="Concrete Pulse home"><span class="brand-name">Concrete</span><span class="brand-divider" aria-hidden="true">/</span><span class="brand-product">Pulse</span></a><p>Observed changes, not recommendations.</p><span>Read-only community tool</span></footer>
+    <footer class="wrap"><a class="brand" href="#top" aria-label="Concrete Pulse home"><img src="/assets/brand/concrete-logo-dark.svg" alt="Concrete" width="800" height="96"><span class="brand-divider" aria-hidden="true">/</span><span class="brand-product">Pulse</span></a><p>Observed changes, not recommendations.</p><span>Read-only community tool</span></footer>
     <noscript><p class="error wrap">Enable JavaScript to load live Pulse data.</p></noscript>
   </main>
 </body>

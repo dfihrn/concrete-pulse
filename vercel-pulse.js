@@ -4,6 +4,7 @@ import { GenerationConflict } from "./generation-store.js";
 import { fetchSnapshot } from "./pulse.js";
 import { makeGeneration, generationFreshness } from "./generation.js";
 import { positiveInteger } from "./collector.js";
+import { presentPulseGeneration } from "./historical-presenter.js";
 
 // Distributed optimistic concurrency: competing invocations may fetch, but only
 // one can replace the generation they both read. Losers do not retry or rebase.
@@ -31,7 +32,7 @@ export function createVercelHandlers({ storeFactory = () => createBlobStore(),
             // Scheduled invocations run on separate instances; do not invent a
             // global collecting flag.
             if (health) return res.json({ status: "ok", ...freshness, collectionMode: "external" });
-            if (generation) return res.json({ ...generation.result, freshness });
+            if (generation) return res.json({ ...presentPulseGeneration(generation), freshness });
             res.setHeader("Retry-After", "60");
             return res.status(503).json({ error: "Pulse data is not available yet. Please try again shortly.", freshness });
         } catch {

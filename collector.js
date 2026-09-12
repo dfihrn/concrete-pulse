@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { fetchSnapshot } from "./pulse.js";
 import { createStore } from "./storage.js";
 import { makeGeneration } from "./generation.js";
+import { presentPulseGeneration } from "./historical-presenter.js";
 
 export function positiveInteger(value, fallback, name) {
     const parsed = value === undefined ? fallback : Number(value);
@@ -75,5 +76,5 @@ export function createCollector({
         if (started) { store.release(); started = false; }
     }
     return { start, stop, collect, metadata,
-        read: () => state ? { ...state.result, freshness: metadata() } : null };
+        read: () => state ? { ...presentPulseGeneration(state), freshness: metadata() } : null };
 }

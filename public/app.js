@@ -1,8 +1,11 @@
+import { latestActivityState } from "./latest-activity-state.js";
+
 const refreshButton = document.querySelector("#refresh");
 const statusMessage = document.querySelector("#status");
 const errorMessage = document.querySelector("#error");
 let hasResults = false;
 let latestResults = null;
+let selectedHistoricalWindow = "1h";
 
 // Use textContent for API values, so vault names are always displayed as text.
 function element(tag, className, text) {
@@ -70,6 +73,28 @@ function renderChanges(id, changes, type, emptyText, limit = changes.length) {
     }
 }
 
+function renderLatestActivityCategory(panelId, listId, changes, type, emptyText, state) {
+    const panel = document.querySelector(panelId);
+    panel.classList.toggle("has-activity", state === "active");
+    panel.classList.toggle("is-quiet", state === "quiet");
+    panel.dataset.state = state;
+
+    if (state === "active") {
+        renderChanges(listId, changes, type, emptyText);
+        return;
+    }
+
+    const container = document.querySelector(listId);
+    container.replaceChildren(element("p", "latest-status-message", emptyText));
+}
+
+function renderOtherLatestActivity(data) {
+    const state = latestActivityState(data.apyChanges, data.depositorChanges);
+    document.querySelector("#other-latest-grid").dataset.state = state.layout;
+    renderLatestActivityCategory("#apy-panel", "#apy-list", data.apyChanges, "apy", "No APY movement detected in this snapshot.", state.apy);
+    renderLatestActivityCategory("#depositors-panel", "#depositors-list", data.depositorChanges, "depositors", "No depositor changes detected in this snapshot.", state.depositors);
+}
+
 function renderActivity(data) {
     const container = document.querySelector("#activity");
     container.replaceChildren();
@@ -113,22 +138,162 @@ function renderActivity(data) {
     }
 }
 
-function renderMostActive(data) {
-    const container = document.querySelector("#active-list");
+function durationLabel(milliseconds) {
+    if (!Number.isFinite(milliseconds) || milliseconds <= 0) return "0M";
+    const totalMinutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours ? `${hours}H${minutes ? ` ${minutes}M` : ""}` : `${minutes}M`;
+}
+
+function comparisonLabel(count) {
+    return `${count.toLocaleString("en-US")} changed ${count === 1 ? "comparison" : "comparisons"}`;
+}
+
+function renderRankedRows(items, containerId, overflowId, detailsId, renderRow) {
+    const container = document.querySelector(containerId);
+    const overflow = document.querySelector(overflowId);
+    const details = document.querySelector(detailsId);
     container.replaceChildren();
-    const overflow = document.querySelector("#active-overflow");
     overflow.replaceChildren();
-    document.querySelector("#more-active").hidden = data.mostActiveVaults.length <= 3;
-    if (!data.mostActiveVaults.length) {
-        container.append(element("p", "empty", "No vault is currently showing more than one type of change at the same time."));
+    details.hidden = items.length <= 3;
+    details.open = false;
+    items.forEach((item, index) => (index < 3 ? container : overflow).append(renderRow(item, index)));
+    return container;
+}
+
+function renderHistoricalActive(window) {
+    const container = renderRankedRows(
+        window.mostActive,
+        "#historical-active-list",
+        "#historical-active-overflow",
+        "#historical-active-more",
+        (vault, index) => {
+            const row = element("article", "history-row historical-active-row", "");
+            const rank = element("p", "history-rank", String(index + 1).padStart(2, "0"));
+            const content = document.createElement("div");
+            content.append(vaultDetails(vault));
+            content.append(element("p", "history-categories", vault.categoriesChanged.join(" · ")));
+            const facts = [comparisonLabel(vault.totalChangedIntervals)];
+            if (vault.notableTvlIntervals > 0) {
+                facts.push(`${vault.notableTvlIntervals} notable TVL ${vault.notableTvlIntervals === 1 ? "movement" : "movements"}`);
+            }
+            content.append(element("p", "history-facts", facts.join(" · ")));
+            row.append(rank, content);
+            return row;
+        },
+    );
+    if (!window.mostActive.length) {
+        container.append(element("p", "empty", "No vault activity was observed in this window."));
     }
-    for (const [index, vault] of data.mostActiveVaults.entries()) {
-        const row = element("article", "active-feature", "");
-        const count = element("p", "feature-count", vault.categoryCount);
-        count.append(element("span", "", "OBSERVED CATEGORIES"));
-        row.append(count, vaultDetails(vault), element("p", "category-count", `Appears here because ${vault.categories.join(", ")} changed in this comparison.`));
-        (index < 3 ? container : overflow).append(row);
+}
+
+function renderHistoricalTvl(window) {
+    const container = renderRankedRows(
+        window.tvlMovers,
+        "#historical-tvl-list",
+        "#historical-tvl-overflow",
+        "#historical-tvl-more",
+        (vault) => {
+            const row = element("article", "history-row historical-metric-row", "");
+            const values = document.createElement("div");
+            const sign = vault.netChange < 0 ? "-" : "+";
+            const relative = Number.isFinite(vault.percentageChange)
+                ? ` (${signedNumber(vault.percentageChange)}%)`
+                : "";
+            values.append(element("p", "history-net", `${sign}${money(Math.abs(vault.netChange))}${relative}`));
+            values.append(element("p", "value-history", `${metricValue(vault.startValue, "tvl")} → ${metricValue(vault.endValue, "tvl")}`));
+            if (vault.notableIntervals > 0) {
+                values.append(element("p", "history-facts", `${vault.notableIntervals} notable ${vault.notableIntervals === 1 ? "interval" : "intervals"}`));
+            }
+            row.append(vaultDetails(vault), values);
+            return row;
+        },
+    );
+    if (!window.tvlMovers.length) {
+        container.append(element("p", "empty", "No net TVL movement was observed in this window."));
     }
+}
+
+function historicalMetricGroup(title, items, type) {
+    const group = element("section", "historical-metric-group", "");
+    group.append(element("h4", "", title));
+    for (const vault of items) {
+        const row = element("article", "historical-compact-row", "");
+        const values = document.createElement("div");
+        if (type === "apy") {
+            values.append(element("p", "history-net", `${signedNumber(vault.percentagePointChange)} percentage points`));
+        } else {
+            values.append(element("p", "history-net", `${signedNumber(vault.netChange, 0)} depositors`));
+        }
+        values.append(element("p", "value-history", `${metricValue(vault.startValue, type)} → ${metricValue(vault.endValue, type)}`));
+        values.append(element("p", "history-facts", comparisonLabel(vault.changeIntervals)));
+        row.append(vaultDetails(vault), values);
+        group.append(row);
+    }
+    return group;
+}
+
+function renderHistoricalOther(window) {
+    const container = document.querySelector("#historical-other-list");
+    const quiet = document.querySelector("#historical-quiet");
+    container.replaceChildren();
+    quiet.replaceChildren();
+
+    if (window.apyMovers.length) {
+        container.append(historicalMetricGroup("APY MOVEMENT", window.apyMovers, "apy"));
+    }
+    if (window.depositorMovers.length) {
+        container.append(historicalMetricGroup("DEPOSITOR ACTIVITY", window.depositorMovers, "depositors"));
+    }
+
+    const quietMessages = [];
+    if (!window.counts.apyChangeIntervals) {
+        quietMessages.push("No APY changes were observed in this window.");
+    } else if (!window.apyMovers.length) {
+        quietMessages.push("APY changed during the window without a net change between its first and last observations.");
+    }
+    if (!window.counts.depositorChangeIntervals) {
+        quietMessages.push("No depositor changes were observed in this window.");
+    } else if (!window.depositorMovers.length) {
+        quietMessages.push("Depositor counts changed during the window without a net change between its first and last observations.");
+    }
+    for (const message of quietMessages) quiet.append(element("p", "", message));
+    container.hidden = container.childElementCount === 0;
+    quiet.hidden = quiet.childElementCount === 0;
+}
+
+function renderHistorical(historical) {
+    const coverage = document.querySelector("#history-coverage");
+    const window = historical?.windows?.[selectedHistoricalWindow];
+    for (const button of document.querySelectorAll("[data-history-window]")) {
+        button.setAttribute("aria-pressed", String(button.dataset.historyWindow === selectedHistoricalWindow));
+    }
+
+    if (!window) {
+        coverage.textContent = "Historical activity is not available yet.";
+        const emptyWindow = { mostActive: [], tvlMovers: [], apyMovers: [], depositorMovers: [], counts: {} };
+        renderHistoricalActive(emptyWindow);
+        renderHistoricalTvl(emptyWindow);
+        renderHistoricalOther({ ...emptyWindow, counts: { apyChangeIntervals: 0, depositorChangeIntervals: 0 } });
+        return;
+    }
+
+    const requestedWindow = selectedHistoricalWindow.toUpperCase();
+    const observedSpan = durationLabel(window.observedSpanMs);
+    const observations = `${window.observationCount.toLocaleString("en-US")} ${window.observationCount === 1 ? "OBSERVATION" : "OBSERVATIONS"}`;
+    coverage.replaceChildren();
+    if (window.partial) {
+        coverage.append(element("strong", "", `PARTIAL WINDOW · ${observedSpan} OF ${requestedWindow} OBSERVED · ${observations}`));
+    } else {
+        coverage.append(
+            element("strong", "", `${requestedWindow} WINDOW COVERED · ${observations}`),
+            element("span", "", `${observedSpan} OBSERVED SPAN`),
+        );
+    }
+    renderHistoricalActive(window);
+    renderHistoricalTvl(window);
+    renderHistoricalOther(window);
 }
 
 function renderTime(id, timestamp) {
@@ -148,17 +313,15 @@ function renderTime(id, timestamp) {
 function renderDashboard(data) {
     for (const node of document.querySelectorAll("[data-summary]")) {
         node.textContent = data.summary[node.dataset.summary].toLocaleString("en-US");
-        if (node.closest(".ecosystem-metrics")) node.parentElement.classList.toggle("is-zero", data.summary[node.dataset.summary] === 0);
     }
     renderTime("#current-time", data.timestamp);
     renderTime("#previous-time", data.previousTimestamp);
     renderActivity(data);
-    renderMostActive(data);
+    renderHistorical(data.historical);
     document.querySelector("#raw-count").textContent = `(${data.summary.tvlChanges})`;
     renderChanges("#notable-list", data.notableTvlChanges, "tvl", "No notable TVL movement in this snapshot. All detected movements remain available below.");
     renderChanges("#tvl-list", data.tvlChanges, "tvl", "No TVL changes detected in this snapshot.");
-    renderChanges("#apy-list", data.apyChanges, "apy", "No APY movement detected in this snapshot.");
-    renderChanges("#depositors-list", data.depositorChanges, "depositors", "No depositor activity detected in this snapshot.");
+    renderOtherLatestActivity(data);
     const unavailable = (data.unavailableMetrics ?? []).filter(issue => issue.snapshot === "current" && issue.metric === "apy").length;
     const note = document.querySelector("#data-note");
     note.hidden = unavailable === 0;
@@ -200,4 +363,19 @@ refreshButton.addEventListener("click", refreshPulse);
 document.querySelector("#show-all").addEventListener("change", () => {
     if (latestResults) renderActivity(latestResults);
 });
+for (const button of document.querySelectorAll("[data-history-window]")) {
+    button.addEventListener("click", () => {
+        selectedHistoricalWindow = button.dataset.historyWindow;
+        if (latestResults) renderHistorical(latestResults.historical);
+    });
+    button.addEventListener("keydown", (event) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        event.preventDefault();
+        const buttons = [...document.querySelectorAll("[data-history-window]")];
+        const direction = event.key === "ArrowRight" ? 1 : -1;
+        const next = buttons[(buttons.indexOf(button) + direction + buttons.length) % buttons.length];
+        next.focus();
+        next.click();
+    });
+}
 refreshPulse();
