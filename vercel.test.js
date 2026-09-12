@@ -37,7 +37,7 @@ test('frontend stays read-only and GitHub Actions schedules the protected collec
  assert.ok(!Object.hasOwn(config,'crons'));
 
  const workflow=fs.readFileSync('.github/workflows/pulse-collector.yml','utf8');
- assert.match(workflow,/cron: ["']\*\/5 \* \* \* \*["']/);
+ assert.match(workflow,/cron: ["']2,7,12,17,22,27,32,37,42,47,52,57 \* \* \* \*["']/);
  assert.match(workflow,/workflow_dispatch:/);
  assert.match(workflow,/secrets\.PULSE_BASE_URL/);
  assert.match(workflow,/secrets\.CRON_SECRET/);
