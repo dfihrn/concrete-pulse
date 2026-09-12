@@ -85,8 +85,9 @@ Configuration (all optional):
 - `PULSE_INTERVAL_MS`: 300000 (five minutes).
 - `PULSE_TIMEOUT_MS`: 15000; aborts the underlying SDK request.
 
-`pulse-state.json` contains previous/current raw snapshots and their completed
-comparison in one generation. A staged file is flushed before atomic rename;
+`pulse-state.json` contains previous/current raw snapshots, their completed
+comparison, and a bounded 24-hour compact observation history in one generation.
+A staged file is flushed before atomic rename;
 `pulse-backup.json` retains the preceding valid generation. Restart validates the
 snapshots and recomputes the result; malformed primary state falls back to backup.
 If both are invalid, collection fails closed instead of erasing evidence. Restore
@@ -159,7 +160,9 @@ server-only value configured in Vercel. Use the workflow's manual dispatch once 
 confirm the deployed collector before relying on its five-minute schedule.
 
 The private JSON object contains `version`, `previous`, `current`, `collectedAt`,
-and `result` (summary counts and change arrays). Raw APY sentinels remain in snapshots.
+`history`, and `result` (summary counts and change arrays). Raw APY sentinels remain
+in snapshots. History stores normalized vault metrics grouped by chain and address;
+it is internal and is not returned by `/api/pulse`.
 Freshness is derived from `collectedAt` on every read, including cold starts.
 No Blob URL or token reaches the browser. Malformed persisted data fails closed.
 
@@ -185,7 +188,8 @@ outages return 503 because a cold function cannot read last-good data then. Heal
 reports stored readiness/freshness, not an invented global in-progress flag.
 
 API reads access Blob, not Concrete. Blob operations and function usage have costs.
-This retains one complete comparison, not an archive. A conditional commit is
+This retains one complete comparison plus the latest 24 hours of compact observations,
+not an unbounded archive. A conditional commit is
 atomic; a lost acknowledgement can mean a complete generation was committed even
 though the caller saw an error. The next origin read is authoritative.
 

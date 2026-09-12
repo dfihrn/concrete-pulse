@@ -42,7 +42,7 @@ export function createStore(directory) {
         if (!fs.existsSync(latest)) return null;
         const current = JSON.parse(fs.readFileSync(latest, "utf8"));
         const before = fs.existsSync(previous) ? JSON.parse(fs.readFileSync(previous, "utf8")) : null;
-        return { version: 1, current, previous: before, collectedAt: current.timestamp,
+        return { version: 1, current, previous: before, collectedAt: current.timestamp, history: [],
             result: compareSnapshots(before, current) };
     }
     function atomicWrite(file, value) {

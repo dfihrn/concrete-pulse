@@ -55,7 +55,8 @@ export function createVercelHandlers({ storeFactory = () => createBlobStore(),
                     return res.json({ status: "skipped", reason: "recent-collection" });
                 }
                 const current = await fetchCurrentSnapshot({ timeoutMs });
-                const next = makeGeneration(generation?.current ?? null, current, new Date(now()).toISOString());
+                const next = makeGeneration(generation?.current ?? null, current,
+                    new Date(now()).toISOString(), generation?.history ?? []);
                 await store.commit(next, revision);
                 return res.json({ status: "collected", timestamp: next.current.timestamp });
             } catch (error) {

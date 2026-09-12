@@ -38,7 +38,7 @@ export function createCollector({
                 const current = await fetchCurrentSnapshot({ signal, timeoutMs });
                 signal.throwIfAborted();
                 const previous = state?.current ?? null;
-                const next = makeGeneration(previous, current, new Date(now()).toISOString());
+                const next = makeGeneration(previous, current, new Date(now()).toISOString(), state?.history ?? []);
                 store.commit(next, state);
                 state = next;
                 failed = false;

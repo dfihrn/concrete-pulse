@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { compareSnapshots, parseMetric, isNotableTvlChange, findMostActiveVaults } from "./pulse.js";
+import { HISTORY_RETENTION_MS, makeGeneration, restoreGeneration } from "./generation.js";
 
 const address = "0x" + "a".repeat(40);
 const otherAddress = "0x" + "b".repeat(40);
@@ -125,4 +126,40 @@ test("APY -1 is unavailable while raw snapshots and other negative rates survive
     }
     const result = compareSnapshots(snapshot([]), snapshot([[1, address, { apy: "-0.01" }]]));
     assert.equal(result.newVaults[0].apy, -0.01);
+});
+
+test("old generations restore with empty history and new generations store compact observations", () => {
+    const collectedAt = "2026-09-11T00:00:00.000Z";
+    const generation = makeGeneration(null, snapshot([[1, address]]), collectedAt);
+    assert.deepEqual(generation.history, [{
+        collectedAt,
+        vaults: { "1": { [address]: {
+            name: "Test vault", tvl: 100, apy: 0.01, depositors: 10
+        } } }
+    }]);
+    const oldGeneration = { ...generation };
+    delete oldGeneration.history;
+    assert.deepEqual(restoreGeneration(oldGeneration).history, []);
+});
+
+test("history appends uniquely and retains only the latest 24 hours", () => {
+    const end = Date.parse("2026-09-12T00:00:00.000Z");
+    const olderAt = new Date(end - HISTORY_RETENTION_MS - 1).toISOString();
+    const insideAt = new Date(end - HISTORY_RETENTION_MS + 1).toISOString();
+    const endAt = new Date(end).toISOString();
+    const first = makeGeneration(null, snapshot([[1, address]]), olderAt);
+    const second = makeGeneration(first.current, snapshot([[1, address, { tvl: 150 }]]), insideAt, first.history);
+    const third = makeGeneration(second.current, snapshot([[1, address, { tvl: 200 }]]), endAt, second.history);
+    assert.deepEqual(third.history.map(observation => observation.collectedAt), [insideAt, endAt]);
+    const duplicate = makeGeneration(third.current, snapshot([[1, address, { tvl: 250 }]]), endAt, third.history);
+    assert.equal(duplicate.history.length, 2);
+    assert.equal(duplicate.history.at(-1).vaults[1][address].tvl, 250);
+});
+
+test("history restore rejects addresses that collide after case normalization", () => {
+    const generation = makeGeneration(null, snapshot([[1, address]]), "2026-09-11T00:00:00.000Z");
+    generation.history[0].vaults[1][otherAddress] = generation.history[0].vaults[1][address];
+    generation.history[0].vaults[1][otherAddress.toUpperCase().replace("0X", "0x")] =
+        generation.history[0].vaults[1][address];
+    assert.throws(() => restoreGeneration(generation), /Duplicate history vault/);
 });
